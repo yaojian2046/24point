@@ -1,0 +1,12 @@
+{
+  "name": "24-game-server",
+  "version": "1.0.0",
+  "description": "24 Point Game Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "socket.io": "^4.7.2"
+  }
+}
