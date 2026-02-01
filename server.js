@@ -1,6 +1,12 @@
 const { Server } = require("socket.io");
 const http = require("http");
 
+/**
+ * 24点游戏云端服务器
+ * 版本: V30.0
+ * 功能: 处理多房间逻辑、洗牌算法及抢答/全局超时重置
+ */
+
 const httpServer = http.createServer();
 const io = new Server(httpServer, {
   cors: {
@@ -56,12 +62,12 @@ function resetRoom(room) {
     room.cards = [];
     room.grabbedBy = null;
     room.winner = null;
-    // 重置所有玩家的准备状态，确保必须重新点“开始”
+    // 重要：重置所有玩家的准备状态，确保必须手动重新点击“准备”
     room.players.forEach(p => p.ready = false);
 }
 
 io.on("connection", (socket) => {
-  console.log("Player connected:", socket.id);
+  console.log(`[V30.0] 玩家连接: ${socket.id}`);
 
   socket.on("join-room", ({ roomId, playerId }) => {
     socket.join(roomId);
@@ -91,7 +97,7 @@ io.on("connection", (socket) => {
       const allReady = room.players.length >= 2 && room.players.every(p => p.ready);
       
       if (allReady && room.status === 'waiting') {
-        room.status = 'counting'; // 进入倒计时阶段
+        room.status = 'counting'; 
         io.to(roomId).emit("room-update", room);
         setTimeout(() => {
           room.status = 'playing';
@@ -113,11 +119,11 @@ io.on("connection", (socket) => {
     }
   });
 
-  // 处理抢答超时：重置房间
+  // 处理抢答超时：由前端触发，服务器执行重置
   socket.on("buzz-timeout", ({ roomId }) => {
       const room = rooms.get(roomId);
       if (room && room.grabbedBy) {
-          console.log(`Room ${roomId}: Buzz timeout by ${room.grabbedBy}`);
+          console.log(`[V30.0] 房间 ${roomId}: 玩家 ${room.grabbedBy} 抢答超时`);
           resetRoom(room);
           io.to(roomId).emit("room-update", room);
           io.to(roomId).emit("game-result", { isWin: false, message: "抢答超时，挑战失败！请重新准备。" });
@@ -128,10 +134,10 @@ io.on("connection", (socket) => {
   socket.on("global-timeout", ({ roomId }) => {
       const room = rooms.get(roomId);
       if (room && room.status === 'playing') {
-          console.log(`Room ${roomId}: Global game timeout`);
+          console.log(`[V30.0] 房间 ${roomId}: 全局比赛超时`);
           resetRoom(room);
           io.to(roomId).emit("room-update", room);
-          io.to(roomId).emit("game-result", { isWin: false, message: "时间到，这题太难了，换一题！" });
+          io.to(roomId).emit("game-result", { isWin: false, message: "时间到，这题太难了，自动换题重开！" });
       }
   });
 
@@ -143,7 +149,6 @@ io.on("connection", (socket) => {
         room.status = 'won';
         room.winner = playerId;
         io.to(roomId).emit("room-update", room);
-        // 胜利后4秒自动重置回大厅状态
         setTimeout(() => {
           resetRoom(room);
           io.to(roomId).emit("room-update", room);
@@ -168,5 +173,5 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
-  console.log(`24-Point Game Server running on port ${PORT}`);
+  console.log(`[V30.0] 24-Point Game Server started on port ${PORT}`);
 });
