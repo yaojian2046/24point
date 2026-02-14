@@ -1,12 +1,13 @@
 {
-  "name": "24-game-server",
+  "name": "24point-server",
   "version": "1.0.0",
-  "description": "24 Point Game Backend",
+  "description": "三八二十四 黄金版服务器配置",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "socket.io": "^4.7.2"
+    "socket.io": "^4.7.2",
+    "express": "^4.18.2"
   }
 }
